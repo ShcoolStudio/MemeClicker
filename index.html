@@ -51,6 +51,19 @@
                     <!-- Улучшения будут добавлены через JavaScript -->
                 </div>
             </section>
+
+            <!-- Мини-игры -->
+            <section class="minigames">
+                <h2>🎮 Мини-игры</h2>
+                <div class="minigames-grid">
+                    <button id="memePuzzleBtn" class="minigame-btn">
+                        <span class="minigame-emoji">🧩</span>
+                        <span class="minigame-name">Мем-пазл</span>
+                        <span class="minigame-cost">2500 монет</span>
+                        <span class="minigame-description">Собери мем за время!</span>
+                    </button>
+                </div>
+            </section>
         </main>
 
         <!-- Купленные персонажи (фон) -->
@@ -58,8 +71,40 @@
 
         <!-- Уведомления -->
         <div class="notifications" id="notifications"></div>
+
+        <!-- Модальное окно мем-пазла -->
+        <div id="puzzleModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🧩 Мем-пазл</h2>
+                    <button class="close-btn" id="closePuzzle">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="puzzle-info">
+                        <div class="puzzle-timer">
+                            <span>⏱️ Время:</span>
+                            <span id="puzzleTimer">30</span>
+                        </div>
+                        <div class="puzzle-score">
+                            <span>🎯 Правильно:</span>
+                            <span id="puzzleScore">0/9</span>
+                        </div>
+                    </div>
+                    <div class="puzzle-container">
+                        <div class="puzzle-grid" id="puzzleGrid">
+                            <!-- Пазл будет создан через JavaScript -->
+                        </div>
+                    </div>
+                    <div class="puzzle-result" id="puzzleResult" style="display: none;">
+                        <h3 id="puzzleResultText"></h3>
+                        <p id="puzzleResultReward"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="game.js"></script>
 </body>
 </html>
+
