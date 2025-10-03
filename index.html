@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meme Clicker - Игра-кликер с мемами</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Заголовок и статистика -->
+        <header class="game-header">
+            <h1 class="game-title">💰 Meme Clicker</h1>
+            <div class="stats">
+                <div class="money-counter">
+                    <span class="money-label">Монеты:</span>
+                    <span id="money" class="money-amount">0</span>
+                </div>
+                <div class="income-counter">
+                    <span class="income-label">Доход/сек:</span>
+                    <span id="income" class="income-amount">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Основная игровая область -->
+        <main class="game-main">
+            <!-- Главный мем для кликов -->
+            <div class="main-meme-container">
+                <button id="mainMeme" class="main-meme">
+                    <div class="meme-emoji">🐸</div>
+                    <div class="meme-name">Pepe</div>
+                    <div class="click-power">+1 монета</div>
+                </button>
+                <div class="click-effects" id="clickEffects"></div>
+            </div>
+
+            <!-- Магазин персонажей -->
+            <section class="shop">
+                <h2>🏪 Магазин мемов</h2>
+                <div class="shop-grid" id="shopGrid">
+                    <!-- Персонажи будут добавлены через JavaScript -->
+                </div>
+            </section>
+
+            <!-- Улучшения -->
+            <section class="upgrades">
+                <h2>⚡ Улучшения</h2>
+                <div class="upgrades-grid" id="upgradesGrid">
+                    <!-- Улучшения будут добавлены через JavaScript -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Купленные персонажи (фон) -->
+        <div class="background-memes" id="backgroundMemes"></div>
+
+        <!-- Уведомления -->
+        <div class="notifications" id="notifications"></div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
