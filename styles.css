@@ -431,10 +431,10 @@ body {
 
 .puzzle-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 5px;
-    width: 300px;
-    height: 300px;
+    width: 420px;
+    height: 280px; /* 6 columns x 4 rows layout */
 }
 
 .puzzle-piece {
