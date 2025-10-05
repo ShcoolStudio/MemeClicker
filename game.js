@@ -9,6 +9,8 @@ class GameState {
         this.upgrades = {};
         this.totalClicks = 0;
         this.totalEarned = 0;
+        this.incomeBonus = 1; // Множитель дохода от мини-игр
+        this.incomeBonusTime = 0; // Время окончания бонуса
     }
 
     // Сохранение в localStorage
@@ -21,7 +23,9 @@ class GameState {
             ownedMemes: this.ownedMemes,
             upgrades: this.upgrades,
             totalClicks: this.totalClicks,
-            totalEarned: this.totalEarned
+            totalEarned: this.totalEarned,
+            incomeBonus: this.incomeBonus,
+            incomeBonusTime: this.incomeBonusTime
         };
         localStorage.setItem('memeClickerSave', JSON.stringify(saveData));
     }
@@ -39,6 +43,8 @@ class GameState {
             this.upgrades = data.upgrades || {};
             this.totalClicks = data.totalClicks || 0;
             this.totalEarned = data.totalEarned || 0;
+            this.incomeBonus = data.incomeBonus || 1;
+            this.incomeBonusTime = data.incomeBonusTime || 0;
             return true;
         }
         return false;
@@ -62,12 +68,10 @@ const MEME_CHARACTERS = [
         name: 'Ленивый котик',
         emoji: '🐱',
         basePrice: 50,
-        baseIncome: 0, // Процентный бонус
-        incomeInterval: 0,
-        description: 'Даёт 1% бонус ко всему заработку',
-        multiplier: 1.2,
-        bonusType: 'percentage',
-        bonusValue: 0.01
+        baseIncome: 1,
+        incomeInterval: 2000, // 2 секунды
+        description: 'Приносит 1 монету каждые 2 секунды',
+        multiplier: 1.2
     },
     {
         id: 'nikita',
@@ -87,8 +91,8 @@ const MEME_CHARACTERS = [
         emoji: '💪',
         basePrice: 500,
         baseIncome: 2,
-        incomeInterval: 3000,
-        description: 'Сильный мем, приносит 2 монеты каждые 3 секунды',
+        incomeInterval: 1000, // 1 секунда
+        description: 'Сильный мем, приносит 2 монеты каждую секунду',
         multiplier: 1.3
     },
     {
@@ -97,8 +101,8 @@ const MEME_CHARACTERS = [
         emoji: '😢',
         basePrice: 1000,
         baseIncome: 5,
-        incomeInterval: 4000,
-        description: 'Печальный, но продуктивный мем',
+        incomeInterval: 500, // 0.5 секунды
+        description: 'Печальный, но очень продуктивный мем',
         multiplier: 1.35
     },
     {
@@ -107,8 +111,8 @@ const MEME_CHARACTERS = [
         emoji: '🦍',
         basePrice: 5000,
         baseIncome: 15,
-        incomeInterval: 2000,
-        description: 'Альфа-мем с высокой продуктивностью',
+        incomeInterval: 1000, // 1 секунда
+        description: 'Альфа-мем с максимальной продуктивностью',
         multiplier: 1.4
     }
 ];
@@ -203,6 +207,7 @@ class MemeClickerGame {
         // Загружаем сохранение
         if (this.gameState.load()) {
             console.log('Игра загружена из сохранения');
+            this.restoreUpgrades();
         }
 
         this.setupEventListeners();
@@ -212,8 +217,40 @@ class MemeClickerGame {
         this.updateDisplay();
         this.addBackgroundMemes();
         
+        // Инициализируем мини-игры
+        this.initializeMiniGames();
+        
         // Автосохранение каждые 30 секунд
         setInterval(() => this.gameState.save(), 30000);
+    }
+
+    initializeMiniGames() {
+        // Инициализируем мини-игры после загрузки DOM
+        setTimeout(() => {
+            console.log('Initializing mini-games...');
+            try {
+                this.memePuzzle = new MemePuzzle(this);
+                console.log('MemePuzzle initialized:', this.memePuzzle);
+            } catch (error) {
+                console.error('Error initializing MemePuzzle:', error);
+            }
+        }, 100);
+    }
+
+    restoreUpgrades() {
+        // Восстанавливаем эффекты улучшений при загрузке
+        Object.keys(this.gameState.upgrades).forEach(upgradeId => {
+            const upgrade = UPGRADES.find(u => u.id === upgradeId);
+            const owned = this.gameState.upgrades[upgradeId];
+            
+            if (upgrade && owned > 0) {
+                if (upgrade.effect === 'clickPower') {
+                    this.gameState.clickPower *= Math.pow(upgrade.effectValue, owned);
+                } else if (upgrade.effect === 'clickBonus') {
+                    this.gameState.clickBonus += upgrade.effectValue * owned;
+                }
+            }
+        });
     }
 
     setupEventListeners() {
@@ -409,8 +446,9 @@ class MemeClickerGame {
             
             if (meme.bonusType === 'percentage') {
                 percentageBonus += meme.bonusValue * owned;
-            } else {
-                income += (meme.baseIncome * owned * 1000) / meme.incomeInterval;
+            } else if (meme.baseIncome > 0 && meme.incomeInterval > 0) {
+                // Правильный расчет: доход в секунду = (доход за интервал * количество) / интервал в секундах
+                income += (meme.baseIncome * owned) / (meme.incomeInterval / 1000);
             }
         });
 
@@ -420,6 +458,15 @@ class MemeClickerGame {
         // Применяем улучшения
         if (this.gameState.upgrades.meme_power) {
             income *= 1.1;
+        }
+
+        // Применяем временные бонусы от мини-игр
+        if (this.gameState.incomeBonusTime > Date.now()) {
+            income *= this.gameState.incomeBonus;
+        } else {
+            // Бонус истек
+            this.gameState.incomeBonus = 1;
+            this.gameState.incomeBonusTime = 0;
         }
 
         return income;
@@ -513,7 +560,244 @@ class MemeClickerGame {
     }
 }
 
+// Класс мем-пазла
+class MemePuzzle {
+    constructor(game) {
+        this.game = game;
+        this.timeLeft = 30;
+        this.score = 0;
+        this.maxScore = 9;
+        this.timer = null;
+        this.currentMeme = null;
+        this.correctOrder = [];
+        this.puzzlePieces = [];
+        this.isGameActive = false;
+        
+        this.setupEventListeners();
+    }
+
+    setupEventListeners() {
+        const puzzleBtn = document.getElementById('memePuzzleBtn');
+        const modal = document.getElementById('puzzleModal');
+        const closeBtn = document.getElementById('closePuzzle');
+
+        console.log('MemePuzzle setupEventListeners - puzzleBtn:', puzzleBtn);
+        console.log('MemePuzzle setupEventListeners - modal:', modal);
+        console.log('MemePuzzle setupEventListeners - closeBtn:', closeBtn);
+
+        if (!puzzleBtn || !modal || !closeBtn) {
+            console.error('MemePuzzle: Required DOM elements not found');
+            return;
+        }
+
+        puzzleBtn.addEventListener('click', () => {
+            console.log('MemePuzzle button clicked!');
+            this.startGame();
+        });
+        closeBtn.addEventListener('click', () => this.closeGame());
+        
+        // Закрытие по клику вне модального окна
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeGame();
+            }
+        });
+
+        console.log('MemePuzzle event listeners attached successfully');
+        
+        // Проверяем стили кнопки
+        const computedStyle = window.getComputedStyle(puzzleBtn);
+        console.log('Button display:', computedStyle.display);
+        console.log('Button visibility:', computedStyle.visibility);
+        console.log('Button pointer-events:', computedStyle.pointerEvents);
+    }
+
+    startGame() {
+        console.log('MemePuzzle startGame called');
+        
+        // Проверяем, хватает ли денег
+        if (this.game.gameState.money < 2500) {
+            this.game.showNotification('Недостаточно монет! Нужно 2500 монет.');
+            return;
+        }
+
+        // Снимаем плату
+        this.game.gameState.money -= 2500;
+        this.game.updateDisplay();
+
+        // Открываем модальное окно
+        const modal = document.getElementById('puzzleModal');
+        if (modal) {
+            modal.style.display = 'block';
+        } else {
+            console.error('Puzzle modal not found');
+            return;
+        }
+        
+        // Сбрасываем состояние игры
+        this.timeLeft = 30;
+        this.score = 0;
+        this.isGameActive = true;
+        
+        // Выбираем случайный мем
+        this.currentMeme = this.getRandomMeme();
+        
+        // Создаем пазл
+        this.createPuzzle();
+        
+        // Запускаем таймер
+        this.startTimer();
+    }
+
+    getRandomMeme() {
+        const memes = [
+            { emoji: '🐸', name: 'Pepe', pattern: ['🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸'] },
+            { emoji: '🐕', name: 'Doge', pattern: ['🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕'] },
+            { emoji: '💪', name: 'Chad', pattern: ['💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪'] },
+            { emoji: '😢', name: 'Wojak', pattern: ['😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢'] }
+        ];
+        
+        return memes[Math.floor(Math.random() * memes.length)];
+    }
+
+    createPuzzle() {
+        const puzzleGrid = document.getElementById('puzzleGrid');
+        puzzleGrid.innerHTML = '';
+
+        // Создаем правильный порядок
+        this.correctOrder = [...this.currentMeme.pattern];
+        
+        // Создаем перемешанный порядок
+        const shuffledOrder = [...this.correctOrder].sort(() => Math.random() - 0.5);
+        
+        // Создаем кусочки пазла
+        this.puzzlePieces = [];
+        shuffledOrder.forEach((emoji, index) => {
+            const piece = document.createElement('div');
+            piece.className = 'puzzle-piece';
+            piece.textContent = emoji;
+            piece.dataset.index = index;
+            piece.addEventListener('click', () => this.clickPiece(index));
+            
+            puzzleGrid.appendChild(piece);
+            this.puzzlePieces.push(piece);
+        });
+
+        this.updateScore();
+    }
+
+    clickPiece(index) {
+        if (!this.isGameActive) return;
+
+        const piece = this.puzzlePieces[index];
+        const clickedEmoji = piece.textContent;
+        const correctEmoji = this.correctOrder[index];
+
+        if (clickedEmoji === correctEmoji) {
+            // Правильно!
+            piece.classList.add('correct');
+            piece.style.pointerEvents = 'none';
+            this.score++;
+            this.updateScore();
+            
+            // Проверяем победу
+            if (this.score === this.maxScore) {
+                this.winGame();
+            }
+        } else {
+            // Неправильно
+            piece.classList.add('wrong');
+            setTimeout(() => {
+                piece.classList.remove('wrong');
+            }, 500);
+        }
+    }
+
+    updateScore() {
+        document.getElementById('puzzleScore').textContent = `${this.score}/${this.maxScore}`;
+    }
+
+    startTimer() {
+        this.timer = setInterval(() => {
+            this.timeLeft--;
+            document.getElementById('puzzleTimer').textContent = this.timeLeft;
+            
+            if (this.timeLeft <= 0) {
+                this.endGame(false);
+            }
+        }, 1000);
+    }
+
+    winGame() {
+        this.isGameActive = false;
+        clearInterval(this.timer);
+        
+        // Награда за победу
+        const bonus = Math.floor(this.game.gameState.totalIncome * 0.2); // 20% от дохода
+        this.game.gameState.money += bonus;
+        
+        // Временный бонус к доходу
+        this.game.gameState.incomeBonus = 1.2; // +20% к доходу
+        this.game.gameState.incomeBonusTime = Date.now() + (10 * 60 * 1000); // 10 минут
+        
+        this.showResult(true, bonus);
+        this.game.updateDisplay();
+        this.game.showNotification(`🎉 Победа! Получено ${bonus} монет и +20% к доходу на 10 минут!`);
+    }
+
+    endGame(won) {
+        this.isGameActive = false;
+        clearInterval(this.timer);
+        
+        if (!won) {
+            this.showResult(false, 0);
+        }
+    }
+
+    showResult(won, reward) {
+        const resultDiv = document.getElementById('puzzleResult');
+        const resultText = document.getElementById('puzzleResultText');
+        const resultReward = document.getElementById('puzzleResultReward');
+        
+        resultDiv.style.display = 'block';
+        
+        if (won) {
+            resultText.textContent = '🎉 Поздравляем!';
+            resultReward.textContent = `Вы получили ${reward} монет и +20% к доходу на 10 минут!`;
+        } else {
+            resultText.textContent = '😔 Время вышло!';
+            resultReward.textContent = 'Попробуйте еще раз!';
+        }
+    }
+
+    closeGame() {
+        if (this.timer) {
+            clearInterval(this.timer);
+        }
+        
+        document.getElementById('puzzleModal').style.display = 'none';
+        document.getElementById('puzzleResult').style.display = 'none';
+        
+        this.isGameActive = false;
+    }
+}
+
 // Запускаем игру когда DOM загружен
 document.addEventListener('DOMContentLoaded', () => {
     window.game = new MemeClickerGame();
+    
+    // Добавляем тестовую функцию в глобальную область
+    window.testMemePuzzle = () => {
+        console.log('Testing MemePuzzle...');
+        const btn = document.getElementById('memePuzzleBtn');
+        console.log('Button found:', btn);
+        if (btn) {
+            btn.click();
+        }
+    };
+    
+    // Автоматически тестируем через 2 секунды
+    setTimeout(() => {
+        console.log('Auto-testing MemePuzzle in 2 seconds...');
+    }, 2000);
 });
