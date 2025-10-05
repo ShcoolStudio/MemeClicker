@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meme Clicker - Игра-кликер с мемами</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -56,7 +57,7 @@
             <section class="minigames">
                 <h2>🎮 Мини-игры</h2>
                 <div class="minigames-grid">
-                    <button id="memePuzzleBtn" class="minigame-btn">
+                    <button id="memePuzzleBtn" class="minigame-btn" onclick="console.log('Button clicked directly!')">
                         <span class="minigame-emoji">🧩</span>
                         <span class="minigame-name">Мем-пазл</span>
                         <span class="minigame-cost">2500 монет</span>
@@ -105,6 +106,28 @@
     </div>
 
     <script src="game.js"></script>
+    <script>
+        // Простая тестовая функция
+        function testPuzzle() {
+            console.log('Test function called!');
+            const btn = document.getElementById('memePuzzleBtn');
+            if (btn) {
+                console.log('Button found, clicking...');
+                btn.click();
+            } else {
+                console.log('Button not found!');
+            }
+        }
+        
+        // Проверяем через 3 секунды после загрузки
+        setTimeout(() => {
+            console.log('Checking puzzle button...');
+            const btn = document.getElementById('memePuzzleBtn');
+            console.log('Button exists:', !!btn);
+            if (btn) {
+                console.log('Button style:', window.getComputedStyle(btn).display);
+            }
+        }, 3000);
+    </script>
 </body>
 </html>
-
