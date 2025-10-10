@@ -1,0 +1,28 @@
+{
+  "name": "Meme Clicker - Игра-кликер с мемами",
+  "short_name": "Meme Clicker",
+  "description": "Затягивающая игра-кликер с популярными мемами! Кликайте по Pepe, нанимайте мемов и играйте в мини-игры для заработка монет.",
+  "version": "1.0.0",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#667eea",
+  "background_color": "#667eea",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "casual", "puzzle"],
+  "lang": "ru",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "i18n": {
+    "supported_languages": ["ru", "en"],
+    "default_language": "ru"
+  }
+}
