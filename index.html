@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
     <title>Meme Clicker - Игра-кликер с мемами</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="shortcut icon" href="favicon.svg">
+    <link rel="apple-touch-icon" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -63,6 +66,12 @@
                         <span class="minigame-cost">2500 монет</span>
                         <span class="minigame-description">Собери мем за время!</span>
                     </button>
+                    <button id="memeranBtn" class="minigame-btn">
+                        <span class="minigame-emoji">🎯</span>
+                        <span class="minigame-name">Меме Квиз</span>
+                        <span class="minigame-cost">1500 монет</span>
+                        <span class="minigame-description">Угадай мем по описанию!</span>
+                    </button>
                 </div>
             </section>
         </main>
@@ -99,6 +108,44 @@
                     <div class="puzzle-result" id="puzzleResult" style="display: none;">
                         <h3 id="puzzleResultText"></h3>
                         <p id="puzzleResultReward"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно Мемеран -->
+        <div id="memeranModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🎯 Меме Квиз</h2>
+                    <button class="close-btn" id="closeMemeran">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="memeran-info">
+                        <div class="memeran-timer">
+                            <span>⏱️ Время:</span>
+                            <span id="memeranTimer">60</span>
+                        </div>
+                        <div class="memeran-score">
+                            <span>🎯 Правильно:</span>
+                            <span id="memeranScore">0/10</span>
+                        </div>
+                        <div class="memeran-streak">
+                            <span>🔥 Серия:</span>
+                            <span id="memeranStreak">0</span>
+                        </div>
+                    </div>
+                    <div class="memeran-container">
+                        <div class="memeran-question" id="memeranQuestion">
+                            <!-- Вопрос будет создан через JavaScript -->
+                        </div>
+                        <div class="memeran-options" id="memeranOptions">
+                            <!-- Варианты ответов будут созданы через JavaScript -->
+                        </div>
+                    </div>
+                    <div class="memeran-result" id="memeranResult" style="display: none;">
+                        <h3 id="memeranResultText"></h3>
+                        <p id="memeranResultReward"></p>
                     </div>
                 </div>
             </div>
