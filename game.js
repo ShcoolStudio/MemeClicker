@@ -417,7 +417,7 @@ class MemeClickerGame {
             this.updateDisplay();
             this.setupShop();
             this.addBackgroundMeme(meme);
-            this.showNotification(`Куплен ${meme.name}!`);
+            this.showNotification('characterBought', { name: meme.name });
             this.gameState.save();
         }
     }
@@ -444,7 +444,7 @@ class MemeClickerGame {
             
             this.updateDisplay();
             this.setupUpgrades();
-            this.showNotification(`Куплено улучшение: ${upgrade.name}!`);
+            this.showNotification('upgradeBought', { name: upgrade.name });
             this.gameState.save();
         }
     }
@@ -555,10 +555,16 @@ class MemeClickerGame {
         container.appendChild(backgroundMeme);
     }
 
-    showNotification(message) {
+    showNotification(messageKey, params = {}) {
         const container = document.getElementById('notifications');
         const notification = document.createElement('div');
         notification.className = 'notification';
+        
+        // Получаем локализованный текст
+        const message = window.localization ? 
+            window.localization.getText(messageKey, params) : 
+            messageKey;
+        
         notification.textContent = message;
         
         container.appendChild(notification);
@@ -587,9 +593,9 @@ class MemeClickerGame {
 class MemePuzzle {
     constructor(game) {
         this.game = game;
-        this.timeLeft = 30;
+        this.timeLeft = 60; // Увеличиваем время с 30 до 60 секунд
         this.score = 0;
-        this.maxScore = 9;
+        this.maxScore = 16; // Увеличиваем с 9 до 16 элементов (4x4)
         this.timer = null;
         this.currentMeme = null;
         this.correctOrder = [];
@@ -640,7 +646,7 @@ class MemePuzzle {
         
         // Проверяем, хватает ли денег
         if (this.game.gameState.money < 2500) {
-            this.game.showNotification('Недостаточно монет! Нужно 2500 монет.');
+            this.game.showNotification('notEnoughMoney');
             return;
         }
 
@@ -658,7 +664,7 @@ class MemePuzzle {
         }
         
         // Сбрасываем состояние игры
-        this.timeLeft = 30;
+        this.timeLeft = 60;
         this.score = 0;
         this.isGameActive = true;
         
@@ -674,10 +680,46 @@ class MemePuzzle {
 
     getRandomMeme() {
         const memes = [
-            { emoji: '🐸', name: 'Pepe', pattern: ['🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸'] },
-            { emoji: '🐕', name: 'Doge', pattern: ['🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕'] },
-            { emoji: '💪', name: 'Chad', pattern: ['💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪'] },
-            { emoji: '😢', name: 'Wojak', pattern: ['😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢'] }
+            { 
+                emoji: '🐸', 
+                name: 'Pepe', 
+                pattern: ['🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸', '🐸'] 
+            },
+            { 
+                emoji: '🐕', 
+                name: 'Doge', 
+                pattern: ['🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕', '🐕'] 
+            },
+            { 
+                emoji: '💪', 
+                name: 'Chad', 
+                pattern: ['💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪', '💪'] 
+            },
+            { 
+                emoji: '😢', 
+                name: 'Wojak', 
+                pattern: ['😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢', '😢'] 
+            },
+            { 
+                emoji: '🦍', 
+                name: 'Gigachad', 
+                pattern: ['🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍', '🦍'] 
+            },
+            { 
+                emoji: '🚀', 
+                name: 'Elon', 
+                pattern: ['🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀', '🚀'] 
+            },
+            { 
+                emoji: '🧩', 
+                name: 'Puzzle', 
+                pattern: ['🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩', '🧩'] 
+            },
+            { 
+                emoji: '🎯', 
+                name: 'Target', 
+                pattern: ['🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯', '🎯'] 
+            }
         ];
         
         return memes[Math.floor(Math.random() * memes.length)];
@@ -755,17 +797,17 @@ class MemePuzzle {
         this.isGameActive = false;
         clearInterval(this.timer);
         
-        // Награда за победу
-        const bonus = Math.floor(this.game.gameState.totalIncome * 0.2); // 20% от дохода
+        // Увеличенная награда за больший пазл (4x4)
+        const bonus = Math.floor(this.game.gameState.totalIncome * 0.4); // 40% от дохода (было 20%)
         this.game.gameState.money += bonus;
         
-        // Временный бонус к доходу
-        this.game.gameState.incomeBonus = 1.2; // +20% к доходу
-        this.game.gameState.incomeBonusTime = Date.now() + (10 * 60 * 1000); // 10 минут
+        // Увеличенный временный бонус к доходу
+        this.game.gameState.incomeBonus = 1.5; // +50% к доходу (было +20%)
+        this.game.gameState.incomeBonusTime = Date.now() + (15 * 60 * 1000); // 15 минут (было 10)
         
         this.showResult(true, bonus);
         this.game.updateDisplay();
-        this.game.showNotification(`🎉 Победа! Получено ${bonus} монет и +20% к доходу на 10 минут!`);
+        this.game.showNotification('puzzleWin', { amount: bonus });
     }
 
     endGame(won) {
@@ -786,7 +828,7 @@ class MemePuzzle {
         
         if (won) {
             resultText.textContent = '🎉 Поздравляем!';
-            resultReward.textContent = `Вы получили ${reward} монет и +20% к доходу на 10 минут!`;
+            resultReward.textContent = `Вы получили ${reward} монет и +50% к доходу на 15 минут!`;
         } else {
             resultText.textContent = '😔 Время вышло!';
             resultReward.textContent = 'Попробуйте еще раз!';
@@ -900,7 +942,7 @@ class MemeQuizGame {
         
         // Проверяем, хватает ли денег
         if (this.game.gameState.money < 1500) {
-            this.game.showNotification('Недостаточно монет! Нужно 1500 монет.');
+            this.game.showNotification('notEnoughMoney');
             return;
         }
         
@@ -989,7 +1031,7 @@ class MemeQuizGame {
             options[selectedIndex].classList.add('correct');
             this.score++;
             this.streak++;
-            this.game.showNotification(`Правильно! Серия: ${this.streak}`);
+            this.game.showNotification('correctAnswer', { streak: this.streak });
         } else {
             options[selectedIndex].classList.add('wrong');
             options[question.correct].classList.add('correct');
@@ -1063,7 +1105,7 @@ class MemeQuizGame {
         // Даем награду
         this.game.gameState.money += reward;
         this.game.updateDisplay();
-        this.game.showNotification(`Получено ${reward} монет!`);
+        this.game.showNotification('quizReward', { amount: reward });
     }
     
     showResult(text, reward) {
