@@ -234,6 +234,13 @@ class MemeClickerGame {
             } catch (error) {
                 console.error('Error initializing MemePuzzle:', error);
             }
+            
+            try {
+                this.memeQuizGame = new MemeQuizGame(this);
+                console.log('MemeQuizGame initialized:', this.memeQuizGame);
+            } catch (error) {
+                console.error('Error initializing MemeQuizGame:', error);
+            }
         }, 100);
     }
 
@@ -777,6 +784,306 @@ class MemePuzzle {
         
         document.getElementById('puzzleModal').style.display = 'none';
         document.getElementById('puzzleResult').style.display = 'none';
+        
+        this.isGameActive = false;
+    }
+}
+
+// Класс игры Меме Квиз
+class MemeQuizGame {
+    constructor(game) {
+        this.game = game;
+        this.timeLeft = 60;
+        this.score = 0;
+        this.streak = 0;
+        this.currentQuestion = 0;
+        this.maxQuestions = 10;
+        this.isGameActive = false;
+        this.timer = null;
+        
+        this.questions = [
+            {
+                question: "Этот мем известен своей грустной мордочкой и часто используется для выражения печали",
+                options: ["Pepe", "Doge", "Sad Cat", "Wojak"],
+                correct: 2
+            },
+            {
+                question: "Классический мем с собакой и разноцветным текстом",
+                options: ["Pepe", "Doge", "Grumpy Cat", "Distracted Boyfriend"],
+                correct: 1
+            },
+            {
+                question: "Зеленый лягушонок, ставший символом интернет-культуры",
+                options: ["Pepe", "Doge", "Kermit", "Frog"],
+                correct: 0
+            },
+            {
+                question: "Мем про парня, который смотрит на другую девушку, пока его девушка недовольна",
+                options: ["Distracted Boyfriend", "Woman Yelling at Cat", "Drake Pointing", "This is Fine"],
+                correct: 0
+            },
+            {
+                question: "Мем с кошкой, которая сидит за столом, пока вокруг все горит",
+                options: ["Grumpy Cat", "This is Fine", "Success Kid", "Trollface"],
+                correct: 1
+            },
+            {
+                question: "Мем с мальчиком, который показывает большой палец вверх",
+                options: ["Success Kid", "Trollface", "Wojak", "Pepe"],
+                correct: 0
+            },
+            {
+                question: "Классический тролль с ухмылкой",
+                options: ["Trollface", "Pepe", "Wojak", "Doge"],
+                correct: 0
+            },
+            {
+                question: "Мем с женщиной, которая кричит на кота за столом",
+                options: ["Woman Yelling at Cat", "Distracted Boyfriend", "This is Fine", "Drake Pointing"],
+                correct: 0
+            },
+            {
+                question: "Мем с рэпером Drake, который показывает пальцем",
+                options: ["Drake Pointing", "Success Kid", "Trollface", "Pepe"],
+                correct: 0
+            },
+            {
+                question: "Простой мем с белым лицом, часто используемый для выражения эмоций",
+                options: ["Wojak", "Pepe", "Trollface", "Doge"],
+                correct: 0
+            }
+        ];
+        
+        this.setupEventListeners();
+    }
+    
+    setupEventListeners() {
+        const btn = document.getElementById('memeranBtn');
+        const modal = document.getElementById('memeranModal');
+        const closeBtn = document.getElementById('closeMemeran');
+        
+        if (btn) {
+            btn.addEventListener('click', () => this.startGame());
+        }
+        
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.closeGame());
+        }
+        
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this.closeGame();
+                }
+            });
+        }
+    }
+    
+    startGame() {
+        console.log('MemeQuizGame startGame called');
+        
+        // Проверяем, хватает ли денег
+        if (this.game.gameState.money < 1500) {
+            this.game.showNotification('Недостаточно монет! Нужно 1500 монет.');
+            return;
+        }
+        
+        // Снимаем плату
+        this.game.gameState.money -= 1500;
+        this.game.updateDisplay();
+        
+        // Открываем модальное окно
+        const modal = document.getElementById('memeranModal');
+        if (modal) {
+            modal.style.display = 'block';
+        } else {
+            console.error('MemeQuiz modal not found');
+            return;
+        }
+        
+        // Сбрасываем состояние игры
+        this.timeLeft = 60;
+        this.score = 0;
+        this.streak = 0;
+        this.currentQuestion = 0;
+        this.isGameActive = true;
+        
+        // Обновляем отображение
+        this.updateDisplay();
+        
+        // Показываем первый вопрос
+        this.showQuestion();
+        
+        // Запускаем таймер
+        this.startTimer();
+    }
+    
+    startTimer() {
+        this.timer = setInterval(() => {
+            this.timeLeft--;
+            this.updateDisplay();
+            
+            if (this.timeLeft <= 0) {
+                this.endGame();
+            }
+        }, 1000);
+    }
+    
+    showQuestion() {
+        if (this.currentQuestion >= this.maxQuestions) {
+            this.endGame();
+            return;
+        }
+        
+        const question = this.questions[this.currentQuestion];
+        const questionElement = document.getElementById('memeranQuestion');
+        const optionsElement = document.getElementById('memeranOptions');
+        
+        if (questionElement) {
+            questionElement.textContent = question.question;
+        }
+        
+        if (optionsElement) {
+            optionsElement.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'memeran-option';
+                button.textContent = option;
+                button.addEventListener('click', () => this.selectAnswer(index));
+                optionsElement.appendChild(button);
+            });
+        }
+    }
+    
+    selectAnswer(selectedIndex) {
+        if (!this.isGameActive) return;
+        
+        const question = this.questions[this.currentQuestion];
+        const options = document.querySelectorAll('.memeran-option');
+        
+        // Отключаем все кнопки
+        options.forEach(btn => {
+            btn.disabled = true;
+            btn.style.pointerEvents = 'none';
+        });
+        
+        // Показываем правильный ответ
+        if (selectedIndex === question.correct) {
+            options[selectedIndex].classList.add('correct');
+            this.score++;
+            this.streak++;
+            this.game.showNotification(`Правильно! Серия: ${this.streak}`);
+        } else {
+            options[selectedIndex].classList.add('wrong');
+            options[question.correct].classList.add('correct');
+            this.streak = 0;
+        }
+        
+        this.updateDisplay();
+        
+        // Переходим к следующему вопросу через 1.5 секунды
+        setTimeout(() => {
+            this.currentQuestion++;
+            if (this.isGameActive) {
+                this.showQuestion();
+            }
+        }, 1500);
+    }
+    
+    updateDisplay() {
+        const timerElement = document.getElementById('memeranTimer');
+        const scoreElement = document.getElementById('memeranScore');
+        const streakElement = document.getElementById('memeranStreak');
+        
+        if (timerElement) {
+            timerElement.textContent = this.timeLeft;
+        }
+        
+        if (scoreElement) {
+            scoreElement.textContent = `${this.score}/${this.maxQuestions}`;
+        }
+        
+        if (streakElement) {
+            streakElement.textContent = this.streak;
+        }
+    }
+    
+    endGame() {
+        this.isGameActive = false;
+        
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
+        
+        // Рассчитываем награду
+        let reward = 0;
+        let resultText = '';
+        
+        if (this.score >= 8) {
+            reward = 5000;
+            resultText = 'Отлично! Вы настоящий знаток мемов!';
+        } else if (this.score >= 6) {
+            reward = 3000;
+            resultText = 'Хорошо! Неплохое знание мемов!';
+        } else if (this.score >= 4) {
+            reward = 1500;
+            resultText = 'Неплохо! Есть куда расти!';
+        } else {
+            reward = 500;
+            resultText = 'Попробуйте еще раз!';
+        }
+        
+        // Добавляем бонус за серию
+        if (this.streak >= 5) {
+            reward += Math.floor(this.streak * 100);
+            resultText += ` Бонус за серию ${this.streak}!`;
+        }
+        
+        // Показываем результат
+        this.showResult(resultText, reward);
+        
+        // Даем награду
+        this.game.gameState.money += reward;
+        this.game.updateDisplay();
+        this.game.showNotification(`Получено ${reward} монет!`);
+    }
+    
+    showResult(text, reward) {
+        const resultElement = document.getElementById('memeranResult');
+        const resultTextElement = document.getElementById('memeranResultText');
+        const resultRewardElement = document.getElementById('memeranResultReward');
+        
+        if (resultTextElement) {
+            resultTextElement.textContent = text;
+        }
+        
+        if (resultRewardElement) {
+            resultRewardElement.textContent = `Награда: ${reward} монет`;
+        }
+        
+        if (resultElement) {
+            resultElement.style.display = 'block';
+        }
+    }
+    
+    closeGame() {
+        const modal = document.getElementById('memeranModal');
+        const resultElement = document.getElementById('memeranResult');
+        
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        
+        if (resultElement) {
+            resultElement.style.display = 'none';
+        }
+        
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+        }
         
         this.isGameActive = false;
     }
