@@ -35,6 +35,18 @@ class GameState {
         const saveData = localStorage.getItem('memeClickerSave');
         if (saveData) {
             const data = JSON.parse(saveData);
+            
+            // Проверяем на "зараженные" сохранения с нереальными значениями
+            if (data.clickPower > 1000 || data.money > 1000000000) {
+                console.warn('Обнаружено сохранение с нереальными значениями. Сбрасываем...');
+                localStorage.removeItem('memeClickerSave');
+                // Показываем уведомление игроку
+                setTimeout(() => {
+                    alert('⚠️ Обнаружена проблема с сохранением игры!\n\nВаш прогресс был сброшен из-за технической ошибки.\nИгра теперь работает корректно. Извините за неудобства!');
+                }, 1000);
+                return false;
+            }
+            
             this.money = data.money || 0;
             this.clickPower = data.clickPower || 1;
             this.clickBonus = data.clickBonus || 0;
@@ -245,6 +257,10 @@ class MemeClickerGame {
     }
 
     restoreUpgrades() {
+        // Сбрасываем базовые значения перед восстановлением
+        this.gameState.clickPower = 1;
+        this.gameState.clickBonus = 0;
+        
         // Восстанавливаем эффекты улучшений при загрузке
         Object.keys(this.gameState.upgrades).forEach(upgradeId => {
             const upgrade = UPGRADES.find(u => u.id === upgradeId);
@@ -1107,4 +1123,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         console.log('Auto-testing MemePuzzle in 2 seconds...');
     }, 2000);
+    
+    // Добавляем функцию сброса сохранения в глобальную область
+    window.resetSave = () => {
+        localStorage.removeItem('memeClickerSave');
+        location.reload();
+    };
 });
