@@ -8,14 +8,75 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="shortcut icon" href="favicon.svg">
     <link rel="apple-touch-icon" href="favicon.svg">
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="game-container">
+    <!-- Главный экран -->
+    <div id="mainScreen" class="main-screen">
+        <div class="main-screen-content">
+            <!-- Логотип и заголовок -->
+            <div class="main-header">
+                <div class="game-logo">💰</div>
+                <h1 class="main-title">Meme Clicker</h1>
+                <p class="main-subtitle">Игра-кликер с популярными мемами!</p>
+            </div>
+            
+            <!-- Кнопки -->
+            <div class="main-buttons">
+                <button id="playButton" class="play-button">
+                    <span class="play-icon">🎮</span>
+                    <span class="play-text">Играть</span>
+                </button>
+                
+                <div class="secondary-buttons">
+                    <button id="settingsButton" class="settings-button">
+                        <span class="settings-icon">⚙️</span>
+                        <span class="settings-text">Настройки</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Информация об игре -->
+            <div class="game-info">
+                <div class="info-item">
+                    <span class="info-icon">🐸</span>
+                    <span class="info-text">Кликайте по мемам</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">🏪</span>
+                    <span class="info-text">Покупайте персонажей</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-icon">🎯</span>
+                    <span class="info-text">Играйте в мини-игры</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Фоновые мемы для главного экрана -->
+        <div class="main-screen-memes">
+            <div class="floating-meme">🐸</div>
+            <div class="floating-meme">🐕</div>
+            <div class="floating-meme">💪</div>
+            <div class="floating-meme">😢</div>
+            <div class="floating-meme">🦍</div>
+            <div class="floating-meme">🚀</div>
+        </div>
+    </div>
+    
+    <!-- Игровой экран -->
+    <div id="gameScreen" class="game-container" style="display: none;">
         <!-- Заголовок и статистика -->
         <header class="game-header">
-            <h1 class="game-title">💰 Meme Clicker</h1>
+            <div class="game-header-top">
+                <button id="backButton" class="back-button">
+                    <span class="back-icon">←</span>
+                    <span class="back-text">Назад</span>
+                </button>
+                <h1 class="game-title">💰 Meme Clicker</h1>
+            </div>
             <div class="stats">
                 <div class="money-counter">
                     <span class="money-label">Монеты:</span>
@@ -64,7 +125,7 @@
                         <span class="minigame-emoji">🧩</span>
                         <span class="minigame-name">Мем-пазл</span>
                         <span class="minigame-cost">2500 монет</span>
-                        <span class="minigame-description">Собери мем за время!</span>
+                        <span class="minigame-description">Сложный пазл 4x4 за 60 секунд!</span>
                     </button>
                     <button id="memeranBtn" class="minigame-btn">
                         <span class="minigame-emoji">🎯</span>
@@ -93,11 +154,11 @@
                     <div class="puzzle-info">
                         <div class="puzzle-timer">
                             <span>⏱️ Время:</span>
-                            <span id="puzzleTimer">30</span>
+                            <span id="puzzleTimer">60</span>
                         </div>
                         <div class="puzzle-score">
                             <span>🎯 Правильно:</span>
-                            <span id="puzzleScore">0/9</span>
+                            <span id="puzzleScore">0/16</span>
                         </div>
                     </div>
                     <div class="puzzle-container">
@@ -152,8 +213,63 @@
         </div>
     </div>
 
+    <script src="localization.js"></script>
     <script src="game.js"></script>
+    <script src="yandex-games.js"></script>
     <script>
+        // Инициализируем Яндекс.Игры при загрузке
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Инициализируем локализацию
+            window.localization.updatePageLanguage();
+            
+            // Добавляем переключатель языка
+            const languageSwitcher = window.localization.createLanguageSwitcher();
+            document.body.appendChild(languageSwitcher);
+            
+            // Инициализируем интеграцию с Яндекс.Играми
+            await window.yandexGamesIntegration.init();
+            
+            // Управление главным экраном
+            const mainScreen = document.getElementById('mainScreen');
+            const gameScreen = document.getElementById('gameScreen');
+            const playButton = document.getElementById('playButton');
+            const backButton = document.getElementById('backButton');
+            const settingsButton = document.getElementById('settingsButton');
+            
+            // Кнопка "Играть"
+            playButton.addEventListener('click', () => {
+                mainScreen.style.display = 'none';
+                gameScreen.style.display = 'block';
+                
+                // Инициализируем игру только при первом запуске
+                if (!window.game) {
+                    window.game = new MemeClickerGame();
+                }
+            });
+            
+            // Кнопка "Назад"
+            backButton.addEventListener('click', () => {
+                gameScreen.style.display = 'none';
+                mainScreen.style.display = 'flex';
+            });
+            
+            // Кнопка "Настройки" (пока просто переключает язык)
+            settingsButton.addEventListener('click', () => {
+                const currentLang = window.localization.currentLanguage;
+                const newLang = currentLang === 'ru' ? 'en' : 'ru';
+                window.localization.setLanguage(newLang);
+                
+                // Обновляем активную кнопку в переключателе
+                const langButtons = document.querySelectorAll('.lang-btn');
+                langButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.lang === newLang) {
+                        btn.classList.add('active');
+                    }
+                });
+            });
+        });
+        
         // Простая тестовая функция
         function testPuzzle() {
             console.log('Test function called!');
